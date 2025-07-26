@@ -1,0 +1,4 @@
+typer[all]
+rich
+pytest
+pytest-cov

@@ -1,0 +1,11 @@
+version: '3.9'
+
+services:
+  bookkeeper:
+    build: .
+    container_name: bookkeeper-app
+    tty: true
+    stdin_open: true
+    volumes:
+      - ./app:/app/app         # código da app
+      - ./logs:/app/logs      # logs do container para a máquina local
