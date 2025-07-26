@@ -3,11 +3,13 @@ from rich.console import Console
 from rich.table import Table
 from database.init_db import inicializar_banco
 import service.livro_service as service
+from utils.logger import logger
 
 app = typer.Typer()
 console = Console()
 
 def listar():
+    logger.info("Listando livros")
     livros = service.listar_livros()
     if not livros:
         console.print("[yellow]Nenhum livro encontrado.[/yellow]")
@@ -25,6 +27,7 @@ def listar():
 
 def adicionar():
     try:
+        logger.info("Iniciando cadastro de livro")
         titulo = typer.prompt("Título")
         autor = typer.prompt("Autor")
         preco = float(typer.prompt("Preço"))
@@ -38,16 +41,20 @@ def adicionar():
             "descricao": descricao
         }
         service.criar_livro(dados)
+        logger.info(f"Livro cadastrado: {titulo} por {autor}")
         console.print("[green]✅ Livro cadastrado com sucesso![/green]")
     except Exception as e:
+        logger.error(f"Erro ao cadastrar livro: {e}")
         console.print(f"[red]Erro:[/red] {e}")
 
 def deletar():
     try:
         id = int(typer.prompt("ID do livro para deletar"))
         service.remover_livro(id)
+        logger.info(f"Livro deletado (ID: {id})")
         console.print("[green]✅ Livro deletado.[/green]")
     except Exception as e:
+        logger.error(f"Erro ao deletar livro (ID: {id}): {e}")
         console.print(f"[red]Erro:[/red] {e}")
 
 def buscar():
@@ -56,7 +63,9 @@ def buscar():
         livro = service.buscar_livro(id)
         if not livro:
             console.print("[red]Livro não encontrado.[/red]")
+            logger.warning(f"Tentativa de buscar livro inexistente (ID: {id})")
             return
+        logger.info(f"Livro encontrado (ID: {id})")
         console.print(f"[cyan]ID:[/cyan] {livro[0]}")
         console.print(f"[cyan]Título:[/cyan] {livro[1]}")
         console.print(f"[cyan]Autor:[/cyan] {livro[2]}")
@@ -64,6 +73,7 @@ def buscar():
         console.print(f"[cyan]Data:[/cyan] {livro[4]}")
         console.print(f"[cyan]Descrição:[/cyan] {livro[5] or '-'}")
     except Exception as e:
+        logger.error(f"Erro ao buscar livro (ID: {id}): {e}")
         console.print(f"[red]Erro:[/red] {e}")
 
 def editar():
@@ -72,6 +82,7 @@ def editar():
         livro_original = service.buscar_livro(id)
         if not livro_original:
             console.print("[red]Livro não encontrado.[/red]")
+            logger.warning(f"Tentativa de editar livro inexistente (ID: {id})")
             return
         titulo = typer.prompt("Novo Título", default=livro_original[1])
         autor = typer.prompt("Novo Autor", default=livro_original[2])
@@ -86,8 +97,10 @@ def editar():
             "descricao": descricao
         }
         service.editar_livro(id, dados)
+        logger.info(f"Livro editado (ID: {id}): {titulo} por {autor}")
         console.print("[green]✅ Livro atualizado![/green]")
     except Exception as e:
+        logger.error(f"Erro ao editar livro (ID: {id}): {e}")
         console.print(f"[red]Erro:[/red] {e}")
 
 def menu():
@@ -101,6 +114,7 @@ def menu():
         console.print("0. Sair")
 
         escolha = input("Escolha uma opção: ")
+        logger.info(f"Opção escolhida pelo usuário: {escolha}")
 
         if escolha == "1":
             listar()
@@ -114,10 +128,13 @@ def menu():
             deletar()
         elif escolha == "0":
             console.print("[bold green]Até logo![/bold green]")
+            logger.info("Aplicação encerrada pelo usuário")
             break
         else:
             console.print("[red]Opção inválida, tente novamente.[/red]")
+            logger.warning(f"Opção inválida digitada: {escolha}")
 
 if __name__ == "__main__":
     inicializar_banco()
+    logger.info("Aplicação iniciada")
     menu()
