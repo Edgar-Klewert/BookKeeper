@@ -8,6 +8,27 @@ from utils.logger import logger
 app = typer.Typer()
 console = Console()
 
+def obter_id_valido(mensagem: str) -> int:
+    entrada = typer.prompt(mensagem)
+    if not entrada.isdigit():
+        raise ValueError("O ID deve ser um número inteiro positivo.")
+    id = int(entrada)
+    if not service.buscar_livro(id):
+        raise ValueError(f"Nenhum livro encontrado com ID {id}.")
+    return id
+
+def obter_preco_valido(default: str = None) -> float:
+    while True:
+        prompt_msg = "Preço (ex: 35.00 ou 35,00)" if not default else f"Novo Preço (padrão: {default})"
+        entrada = typer.prompt(prompt_msg, default=default).strip().replace(",", ".")
+        try:
+            preco = float(entrada)
+            if preco <= 0:
+                raise ValueError
+            return preco
+        except ValueError:
+            console.print("[yellow]⚠ Insira um número válido e positivo para o preço.[/yellow]")
+
 def listar():
     logger.info("Listando livros")
     livros = service.listar_livros()
@@ -30,7 +51,7 @@ def adicionar():
         logger.info("Iniciando cadastro de livro")
         titulo = typer.prompt("Título")
         autor = typer.prompt("Autor")
-        preco = float(typer.prompt("Preço"))
+        preco = obter_preco_valido()
         data_publicacao = typer.prompt("Data de Publicação (YYYY-MM-DD)")
         descricao = typer.prompt("Descrição (opcional)", default="")
         dados = {
@@ -49,22 +70,18 @@ def adicionar():
 
 def deletar():
     try:
-        id = int(typer.prompt("ID do livro para deletar"))
+        id = obter_id_valido("ID do livro para deletar")
         service.remover_livro(id)
         logger.info(f"Livro deletado (ID: {id})")
         console.print("[green]✅ Livro deletado.[/green]")
     except Exception as e:
-        logger.error(f"Erro ao deletar livro (ID: {id}): {e}")
+        logger.error(f"Erro ao deletar livro: {e}")
         console.print(f"[red]Erro:[/red] {e}")
 
 def buscar():
     try:
-        id = int(typer.prompt("ID do livro para buscar"))
+        id = obter_id_valido("ID do livro para buscar")
         livro = service.buscar_livro(id)
-        if not livro:
-            console.print("[red]Livro não encontrado.[/red]")
-            logger.warning(f"Tentativa de buscar livro inexistente (ID: {id})")
-            return
         logger.info(f"Livro encontrado (ID: {id})")
         console.print(f"[cyan]ID:[/cyan] {livro[0]}")
         console.print(f"[cyan]Título:[/cyan] {livro[1]}")
@@ -73,26 +90,22 @@ def buscar():
         console.print(f"[cyan]Data:[/cyan] {livro[4]}")
         console.print(f"[cyan]Descrição:[/cyan] {livro[5] or '-'}")
     except Exception as e:
-        logger.error(f"Erro ao buscar livro (ID: {id}): {e}")
+        logger.error(f"Erro ao buscar livro: {e}")
         console.print(f"[red]Erro:[/red] {e}")
 
 def editar():
     try:
-        id = int(typer.prompt("ID do livro para editar"))
+        id = obter_id_valido("ID do livro para editar")
         livro_original = service.buscar_livro(id)
-        if not livro_original:
-            console.print("[red]Livro não encontrado.[/red]")
-            logger.warning(f"Tentativa de editar livro inexistente (ID: {id})")
-            return
         titulo = typer.prompt("Novo Título", default=livro_original[1])
         autor = typer.prompt("Novo Autor", default=livro_original[2])
-        preco = typer.prompt("Novo Preço", default=str(livro_original[3]))
+        preco = obter_preco_valido(str(livro_original[3]))
         data = typer.prompt("Nova Data (YYYY-MM-DD)", default=livro_original[4])
         descricao = typer.prompt("Nova Descrição", default=livro_original[5] or "")
         dados = {
             "titulo": titulo,
             "autor": autor,
-            "preco": float(preco),
+            "preco": preco,
             "data_publicacao": data,
             "descricao": descricao
         }
@@ -100,7 +113,7 @@ def editar():
         logger.info(f"Livro editado (ID: {id}): {titulo} por {autor}")
         console.print("[green]✅ Livro atualizado![/green]")
     except Exception as e:
-        logger.error(f"Erro ao editar livro (ID: {id}): {e}")
+        logger.error(f"Erro ao editar livro: {e}")
         console.print(f"[red]Erro:[/red] {e}")
 
 def menu():
