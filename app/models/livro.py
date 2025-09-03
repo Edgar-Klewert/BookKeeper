@@ -13,8 +13,6 @@ class Livro:
     def validar(self):
         if not self.titulo.strip():
             raise ValueError("Título é obrigatório")
-        if not self.autor.strip():
-            raise ValueError("Autor é obrigatório")
         if self.preco <= 0:
             raise ValueError("Preço deve ser maior que zero")
         try:
