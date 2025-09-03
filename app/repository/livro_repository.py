@@ -11,9 +11,9 @@ def salvar_livro(livro):
             (livro.titulo, livro.autor, livro.preco, livro.data_publicacao, livro.descricao)
         )
 
-def listar_livros():
+def listar_livros(coluna):
     with conectar() as conn:
-        return conn.execute("SELECT * FROM livros").fetchall()
+        return conn.execute("SELECT * FROM livros ORDER BY ? ASC", (coluna)).fetchall()
 
 def buscar_por_id(id):
     with conectar() as conn:
@@ -30,3 +30,11 @@ def atualizar_livro(id, livro):
             WHERE id=?""",
             (livro.titulo, livro.autor, livro.preco, livro.data_publicacao, livro.descricao, id)
         )
+
+def buscar_por_titulo(titulo):
+    with conectar() as conn:
+        return conn.execute(
+            "SELECT * FROM livros WHERE titulo LIKE ?",
+            ('%' + titulo + '%',)
+        ).fetchall()
+        
