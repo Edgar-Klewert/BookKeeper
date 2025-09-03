@@ -31,7 +31,18 @@ def obter_preco_valido(default: str = None) -> float:
 
 def listar():
     logger.info("Listando livros")
-    livros = service.listar_livros()
+    console.print("como deseja listae os livros?")
+    console.print("1. Por Título")
+    console.print("2. Por ID")
+    escolha_order = typer.prompt("Escolha uma opção (1 ou 2)", default="1")
+    
+    if escolha_order == "1":
+        coluna = "titulo"
+    else:
+        coluna = "id"
+        
+    livros = service.listar_livros(coluna)
+    
     if not livros:
         console.print("[yellow]Nenhum livro encontrado.[/yellow]")
         return
@@ -50,7 +61,7 @@ def adicionar():
     try:
         logger.info("Iniciando cadastro de livro")
         titulo = typer.prompt("Título")
-        autor = typer.prompt("Autor")
+        autor = typer.prompt("Autor (opcional)", default="")
         preco = obter_preco_valido()
         data_publicacao = typer.prompt("Data de Publicação (YYYY-MM-DD)")
         descricao = typer.prompt("Descrição (opcional)", default="")
@@ -72,27 +83,41 @@ def deletar():
     try:
         id = obter_id_valido("ID do livro para deletar")
         service.remover_livro(id)
+        
+        console.print(f"[cyan] deseja realmente deletar o livro com ID {id}?[/cyan]")
+        
+        confirmar = typer.confirm("Confirma a exclusão?")
+        if not confirmar:
+            console.print("[yellow]Exclusão cancelada.[/yellow]")
+            logger.info("Exclusão de livro cancelada pelo usuário")
+            return
+                    
         logger.info(f"Livro deletado (ID: {id})")
         console.print("[green]✅ Livro deletado.[/green]")
     except Exception as e:
         logger.error(f"Erro ao deletar livro: {e}")
         console.print(f"[red]Erro:[/red] {e}")
-
-def buscar():
+        
+def buscar_por_titulo():
     try:
-        id = obter_id_valido("ID do livro para buscar")
-        livro = service.buscar_livro(id)
-        logger.info(f"Livro encontrado (ID: {id})")
+        titulo = typer.prompt("Título do livro para buscar")
+        livro = service.buscar_livro_por_titulo(titulo)
+        if not livro:
+            console.print("[yellow]Nenhum livro encontrado com esse título.[/yellow]")
+            return 
+        
+        logger.info(f"Livro encontrado pelo título: {titulo}")
         console.print(f"[cyan]ID:[/cyan] {livro[0]}")
         console.print(f"[cyan]Título:[/cyan] {livro[1]}")
         console.print(f"[cyan]Autor:[/cyan] {livro[2]}")
         console.print(f"[cyan]Preço:[/cyan] R${livro[3]:.2f}")
         console.print(f"[cyan]Data:[/cyan] {livro[4]}")
         console.print(f"[cyan]Descrição:[/cyan] {livro[5] or '-'}")
+        
     except Exception as e:
-        logger.error(f"Erro ao buscar livro: {e}")
+        logger.error(f"Erro ao buscar livro por título: {e}")
         console.print(f"[red]Erro:[/red] {e}")
-
+        
 def editar():
     try:
         id = obter_id_valido("ID do livro para editar")
@@ -121,7 +146,7 @@ def menu():
         console.print("\n[bold blue]=== MENU BOOKKEEPER ===[/bold blue]")
         console.print("1. Listar Livros")
         console.print("2. Adicionar Livro")
-        console.print("3. Buscar Livro por ID")
+        console.print("3. Buscar Livro por Título")
         console.print("4. Editar Livro")
         console.print("5. Deletar Livro")
         console.print("0. Sair")
@@ -134,7 +159,7 @@ def menu():
         elif escolha == "2":
             adicionar()
         elif escolha == "3":
-            buscar()
+            buscar_por_titulo()
         elif escolha == "4":
             editar()
         elif escolha == "5":
